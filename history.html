@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rieker — Lịch Sử Bảo Trì</title>
+    <meta name="description" content="Nhật ký và lịch sử khắc phục sự cố bảo trì Rieker Vietnam">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/views.css">
+    <style>
+        .filter-bar {
+            display: flex;
+            gap: 0.625rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .filter-bar input {
+            flex: 1;
+            min-width: 160px;
+        }
+        .filter-bar .btn { white-space: nowrap; }
+
+        .history-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1rem 0.875rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--border-radius-sm);
+        }
+        .summary-icon { font-size: 1.25rem; margin-bottom: 0.35rem; }
+        .summary-num {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            font-family: var(--font-mono);
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+        .summary-label {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+        }
+
+        .empty-row td {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--text-muted);
+        }
+        .empty-row td i {
+            font-size: 1.75rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <div id="header-container"></div>
+        <div class="content-wrapper">
+            <section class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Lịch Sử Khắc Phục Sự Cố</h1>
+                        <p class="view-subtitle">Nhật ký toàn bộ các yêu cầu bảo trì đã hoàn tất xử lý trong xưởng</p>
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="history-summary">
+                    <div class="summary-item glass-panel">
+                        <div class="summary-icon"><span class="led-dot success"></span></div>
+                        <div class="summary-num" id="totalCompleted">—</div>
+                        <div class="summary-label">Tổng Đã Khắc Phục</div>
+                    </div>
+                    <div class="summary-item glass-panel">
+                        <div class="summary-icon"><span class="led-dot p1-danger"></span></div>
+                        <div class="summary-num" id="totalHigh" style="color:var(--p1-red);">—</div>
+                        <div class="summary-label">Sự Cố Dừng Máy (P1)</div>
+                    </div>
+                    <div class="summary-item glass-panel">
+                        <div class="summary-icon"><span class="led-dot p2-warning"></span></div>
+                        <div class="summary-num" id="totalMedium" style="color:var(--p2-amber);">—</div>
+                        <div class="summary-label">Sự Cố Vận Hành (P2)</div>
+                    </div>
+                    <div class="summary-item glass-panel">
+                        <div class="summary-icon"><span class="led-dot info"></span></div>
+                        <div class="summary-num" id="totalLow" style="color:var(--info);">—</div>
+                        <div class="summary-label">Mức Độ Thấp</div>
+                    </div>
+                </div>
+
+                <!-- Filter + Table -->
+                <div class="table-card glass-panel">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);margin-right:6px;"></i>
+                            Nhật Ký Bảo Trì Hoàn Thành
+                        </h3>
+                        <span class="text-xs text-muted font-mono" id="resultCount">Đang tải...</span>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" id="filterMachine" placeholder="🔍 Lọc theo mã máy (VD: M101)..." class="font-mono">
+                        <input type="text" id="filterReporter" placeholder="🔍 Lọc theo công nhân báo...">
+                        <button class="btn btn-primary" id="applyFilter"><i class="fa-solid fa-filter"></i> Lọc Dữ Liệu</button>
+                        <button class="btn btn-outline" id="clearFilter"><i class="fa-solid fa-xmark"></i> Xóa Lọc</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mã Phiếu</th>
+                                    <th>Mã Thiết Bị</th>
+                                    <th>Người Báo Cáo</th>
+                                    <th>Mức Độ Nghiêm Trọng</th>
+                                    <th>Hiện Trường Sự Cố</th>
+                                    <th>Thời Điểm Hoàn Thành</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- Sonner / Stacked Toast Container -->
+<div id="sonner-container" class="sonner-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="scripts/store.js?v=4"></script>
+<script src="scripts/ui.js?v=4"></script>
+<script src="scripts/auth.js?v=4"></script>
+<script src="scripts/components.js?v=4"></script>
+<script>
+    const user = window.auth.requireAuth();
+    if (user.role !== 'technician') {
+        window.location.href = 'index.html';
+    }
+    document.getElementById('sidebar-container').innerHTML = window.renderSidebar('history');
+    document.getElementById('header-container').innerHTML = window.renderHeader();
+
+    let allHistory = [];
+
+    function levelBadge(level) {
+        if (level === 'high') {
+            return '<span class="badge-status status-p1"><span class="led-dot p1-danger"></span> P1 - DỪNG MÁY</span>';
+        }
+        if (level === 'medium') {
+            return '<span class="badge-status status-p2"><span class="led-dot p2-warning"></span> P2 - HỎNG NHẸ</span>';
+        }
+        return '<span class="badge-status status-completed"><span class="led-dot success"></span> MỨC THẤP</span>';
+    }
+
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('historyBody');
+        document.getElementById('resultCount').textContent = `${data.length} bản ghi`;
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><i class="fa-solid fa-box-open"></i>Không tìm thấy bản ghi nào</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(r => `
+            <tr>
+                <td><span class="table-req-id">${r.request_id}</span></td>
+                <td>
+                    <span class="table-machine-id" style="cursor:pointer;" onclick="window.openMachineDrawer && window.openMachineDrawer('${r.machine_id}')">
+                        <i class="fa-solid fa-microchip" style="font-size:0.7rem;margin-right:4px;"></i>${r.machine_id}
+                    </span>
+                </td>
+                <td>${r.reporter_name}</td>
+                <td>${levelBadge(r.issue_level)}</td>
+                <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.issue_desc || ''}">${r.issue_desc || '—'}</td>
+                <td><span class="table-timestamp"><i class="fa-regular fa-clock" style="margin-right:4px;"></i>${formatDate(r.created_at)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function updateStats(data) {
+        document.getElementById('totalCompleted').textContent = data.length;
+        document.getElementById('totalHigh').textContent   = data.filter(r => r.issue_level === 'high').length;
+        document.getElementById('totalMedium').textContent = data.filter(r => r.issue_level === 'medium').length;
+        document.getElementById('totalLow').textContent    = data.filter(r => r.issue_level === 'low' || !r.issue_level).length;
+    }
+
+    async function loadHistory(filter = {}) {
+        document.getElementById('historyBody').innerHTML =
+            `<tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="border-width:2px;width:20px;height:20px;border-top-color:#00d4ff;margin-right:8px;"></div>Đang nạp dữ liệu...</td></tr>`;
+        allHistory = await window.fetchHistory(filter);
+        updateStats(allHistory);
+        renderTable(allHistory);
+    }
+
+    document.getElementById('applyFilter').addEventListener('click', () => {
+        loadHistory({
+            machine_id: document.getElementById('filterMachine').value.trim(),
+            reporter:   document.getElementById('filterReporter').value.trim()
+        });
+    });
+
+    document.getElementById('clearFilter').addEventListener('click', () => {
+        document.getElementById('filterMachine').value  = '';
+        document.getElementById('filterReporter').value = '';
+        loadHistory();
+    });
+
+    loadHistory();
+</script>
+</body>
+</html>

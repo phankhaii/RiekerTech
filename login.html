@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rieker Tech — Đăng Nhập Hệ Thống</title>
+    <meta name="description" content="Hệ thống quản lý yêu cầu bảo trì nhà máy Rieker Vietnam">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-base);
+        }
+
+        /* Technical Grid Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 36px 36px;
+            pointer-events: none;
+        }
+
+        .auth-wrap {
+            width: 100%;
+            max-width: 400px;
+            padding: 1.25rem;
+            z-index: 10;
+            position: relative;
+        }
+
+        .brand-topbar {
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--border-radius-xs);
+            padding: 4px 10px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+        }
+
+        .auth-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--border-radius-sm); /* 6px */
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            display: block;
+            height: 1px;
+            background: linear-gradient(90deg, #00d4ff, #8b5cf6, transparent);
+        }
+
+        .auth-card-inner { padding: 1.75rem; }
+
+        .auth-logo-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-logo-icon {
+            width: 38px; height: 38px;
+            border-radius: var(--border-radius-xs);
+            background: #00d4ff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            color: #000;
+            box-shadow: 0 0 16px var(--primary-glow);
+            flex-shrink: 0;
+            font-weight: 800;
+        }
+
+        .auth-logo-text h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-bright);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+        .auth-logo-text h1 span { color: var(--primary); }
+        .auth-logo-text p {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+
+        .auth-section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .form-group { margin-bottom: 0.875rem; }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.65rem;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 700;
+        }
+
+        .msg-box {
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius-xs);
+            display: none;
+            font-weight: 500;
+        }
+        .msg-error   { background: var(--p1-bg); color: var(--p1-red); border: 1px solid var(--p1-border); }
+        .msg-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+
+        .auth-toggle {
+            margin-top: 1.125rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+        .auth-toggle a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .auth-toggle a:hover { text-decoration: underline; }
+
+        #registerForm { display: none; }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.125rem;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrap">
+        <div class="brand-topbar">
+            <span class="brand-badge">
+                <span class="led-dot success" style="margin-right:4px;"></span>
+                Hệ Thống Trực Tuyến
+            </span>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-card-inner">
+                <!-- Logo -->
+                <div class="auth-logo-row">
+                    <div class="auth-logo-icon">
+                        <i class="fa-solid fa-industry"></i>
+                    </div>
+                    <div class="auth-logo-text">
+                        <h1>Rieker<span>Tech</span></h1>
+                        <p>Factory Maintenance System</p>
+                    </div>
+                </div>
+
+                <div id="errorMsg"   class="msg-box msg-error"></div>
+                <div id="successMsg" class="msg-box msg-success"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="auth-section-title">Xác thực tài khoản ca trực</div>
+                    <div class="form-group">
+                        <label>Tên đăng nhập</label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="logUsername" required placeholder="Nhập tên đăng nhập">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="logPassword" required placeholder="••••••••">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary auth-btn">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập
+                    </button>
+                    <div class="auth-toggle">
+                        <p>Chưa có tài khoản? <a href="#" id="showRegisterBtn">Đăng ký mới</a></p>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm">
+                    <div class="auth-section-title">Tạo tài khoản nhân viên</div>
+                    <div class="form-group">
+                        <label>Họ và Tên</label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-id-card"></i>
+                            <input type="text" id="regFullname" required placeholder="Nguyễn Văn A">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Vai trò / Chức danh</label>
+                        <div class="custom-select">
+                            <select id="regRole" required>
+                                <option value="worker">Công nhân / Tổ trưởng sản xuất</option>
+                                <option value="technician">Kỹ thuật viên cơ điện</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tên đăng nhập</label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="regUsername" required placeholder="vd: nv.a" class="font-mono">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="regPassword" required placeholder="••••••••">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary auth-btn">
+                        <i class="fa-solid fa-user-plus"></i> Hoàn Tất Đăng Ký
+                    </button>
+                    <div class="auth-toggle">
+                        <p>Đã có tài khoản? <a href="#" id="showLoginBtn">Đăng nhập</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            © 2026 Rieker Vietnam · Industrial Operations v2.0
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/auth.js?v=4"></script>
+    <script>
+        if (window.auth.getCurrentUser()) {
+            window.location.href = 'index.html';
+        }
+
+        const loginForm    = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const errorMsg     = document.getElementById('errorMsg');
+        const successMsg   = document.getElementById('successMsg');
+
+        document.getElementById('showRegisterBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            hideMessages();
+        });
+
+        document.getElementById('showLoginBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            hideMessages();
+        });
+
+        function hideMessages() {
+            errorMsg.style.display   = 'none';
+            successMsg.style.display = 'none';
+        }
+
+        function showMessage(msg, isError = true) {
+            hideMessages();
+            if (isError) {
+                errorMsg.textContent   = msg;
+                errorMsg.style.display = 'block';
+            } else {
+                successMsg.textContent   = msg;
+                successMsg.style.display = 'block';
+            }
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = loginForm.querySelector('.auth-btn');
+            const originalBtn = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang kiểm tra...';
+            submitBtn.disabled = true;
+
+            const user = document.getElementById('logUsername').value.trim();
+            const pass = document.getElementById('logPassword').value;
+
+            const result = await window.auth.login(user, pass);
+
+            submitBtn.innerHTML = originalBtn;
+            submitBtn.disabled = false;
+
+            if (result.success) {
+                window.location.href = 'index.html';
+            } else {
+                showMessage(result.message, true);
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = registerForm.querySelector('.auth-btn');
+            const originalBtn = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang lưu...';
+            submitBtn.disabled = true;
+
+            const fullname = document.getElementById('regFullname').value.trim();
+            const role     = document.getElementById('regRole').value;
+            const user     = document.getElementById('regUsername').value.trim();
+            const pass     = document.getElementById('regPassword').value;
+
+            if (user.length === 0 || pass.length === 0) {
+                showMessage('Vui lòng nhập đầy đủ thông tin!', true);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtn;
+                return;
+            }
+
+            const result = await window.auth.register(user, pass, role, fullname);
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtn;
+
+            if (result.success) {
+                registerForm.reset();
+                registerForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                showMessage(result.message, false);
+                document.getElementById('logUsername').value = user;
+            } else {
+                showMessage(result.message, true);
+            }
+        });
+    </script>
+</body>
+</html>

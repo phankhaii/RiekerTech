@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rieker — Tổng Quan Giám Sát Thiết Bị</title>
+    <meta name="description" content="Dashboard tổng quan hệ thống bảo trì công nghiệp Rieker Vietnam">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/views.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- JS renders Sidebar here -->
+        <div id="sidebar-container"></div>
+
+        <main class="main-content">
+            <!-- JS renders Header here -->
+            <div id="header-container"></div>
+
+            <div class="content-wrapper">
+                <section class="view-section active">
+                    <div class="view-header">
+                        <div>
+                            <h1 class="view-title" id="pageTitle">Dashboard Giám Sát Thiết Bị</h1>
+                            <p class="view-subtitle">Theo dõi trạng thái máy móc, cảnh báo sự cố P1/P2 thời gian thực</p>
+                        </div>
+                        <a href="qr-scanner.html" class="btn btn-primary btn-glow" id="qrBtn">
+                            <i class="fa-solid fa-qrcode"></i> Quét Báo Hỏng
+                        </a>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card glass-panel flex-row">
+                            <div class="stat-icon-box info"><i class="fa-solid fa-server"></i></div>
+                            <div class="stat-details">
+                                <p class="stat-label">Tổng Thiết Bị</p>
+                                <h3 class="stat-number" id="deviceCount">...</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel flex-row">
+                            <div class="stat-icon-box danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="stat-details">
+                                <p class="stat-label">Sự Cố Chờ Xử Lý</p>
+                                <h3 class="stat-number" id="pendingCount">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel flex-row">
+                            <div class="stat-icon-box success"><i class="fa-solid fa-check-double"></i></div>
+                            <div class="stat-details">
+                                <p class="stat-label">Đã Khắc Phục Xong</p>
+                                <h3 class="stat-number" id="completedCount">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-tables">
+                        <div class="table-card glass-panel">
+                            <div class="card-header">
+                                <h3>
+                                    <i class="fa-solid fa-list-check" style="color:var(--primary);margin-right:6px;"></i>
+                                    Danh Sách Yêu Cầu Bảo Trì &amp; Khắc Phục Sự Cố
+                                </h3>
+                                <span class="text-xs text-muted font-mono"><i class="fa-solid fa-rotate" style="margin-right:4px;"></i>Realtime Cloud Sync</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="requestsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã Phiếu</th>
+                                            <th>Mã Thiết Bị</th>
+                                            <th>Người Báo Cáo</th>
+                                            <th>Trạng Thái / Ưu Tiên</th>
+                                            <th>Thời Gian Ghi Nhận</th>
+                                            <th style="text-align:center;">Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sonner / Stacked Toast Container -->
+    <div id="sonner-container" class="sonner-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/store.js?v=4"></script>
+    <script src="scripts/ui.js?v=4"></script>
+    <script src="scripts/auth.js?v=4"></script>
+    <script src="scripts/components.js?v=4"></script>
+    <script>
+        window.auth.requireAuth();
+    </script>
+    <script src="scripts/dashboard.js?v=4"></script>
+</body>
+</html>

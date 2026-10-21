@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rieker — Quét QR Báo Hỏng Sắc Nét</title>
+    <meta name="description" content="Trạm quét mã QR báo hỏng nhanh chuẩn công nghiệp Rieker Tech">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/views.css">
+    <!-- QR Code Reader Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        <main class="main-content">
+            <div id="header-container"></div>
+            <div class="content-wrapper">
+                <section class="view-section">
+                    <div class="view-header">
+                        <div>
+                            <h1 class="view-title">Quét QR Mã Thiết Bị</h1>
+                            <p class="view-subtitle">Đưa camera vào sát tem nhãn mã QR hoặc nhập nhanh mã số máy khi bị mờ xước</p>
+                        </div>
+                        <a href="request-form.html" class="btn btn-secondary">
+                            <i class="fa-solid fa-pen-to-square"></i> Mở Form Nhập Tay
+                        </a>
+                    </div>
+
+                    <div class="qr-scanner-container glass-panel">
+                        <div class="scanner-layout">
+                            <!-- Left: Laser HUD Camera Frame -->
+                            <div class="scanner-ui">
+                                <div class="scanner-frame-hud" id="scannerFrame">
+                                    <!-- 4 Corner HUD laser brackets -->
+                                    <div class="hud-corner tl"></div>
+                                    <div class="hud-corner tr"></div>
+                                    <div class="hud-corner bl"></div>
+                                    <div class="hud-corner br"></div>
+
+                                    <!-- Center Reticle -->
+                                    <div class="hud-reticle">
+                                        <div class="hud-crosshair"></div>
+                                    </div>
+
+                                    <!-- Laser Scan Line -->
+                                    <div class="laser-scan-line hidden" id="scannerLine"></div>
+
+                                    <!-- Camera Feed Container -->
+                                    <div class="camera-feed" id="cameraFeed">
+                                        <div class="mock-camera-view">
+                                            <i class="fa-solid fa-camera camera-icon"></i>
+                                            <p style="color:var(--text-primary);font-weight:600;margin-bottom:4px;">Camera đang ở chế độ chờ</p>
+                                            <p class="text-xs text-muted">Nhấn nút bên phải để kích hoạt Camera quét HUD</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Processing Overlay -->
+                                    <div class="processing-overlay hidden" id="processingOverlay">
+                                        <div class="spinner" style="width:24px;height:24px;border-top-color:#00d4ff;"></div>
+                                        <span>ĐÃ NHẬN DIỆN MÃ QR...</span>
+                                    </div>
+                                </div>
+
+                                <!-- Camera Bottom HUD Bar -->
+                                <div class="camera-hud-bar full-width">
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <span class="led-dot info" id="camLed"></span>
+                                        <span id="camStatusText">HUD READY</span>
+                                    </div>
+                                    <!-- Flashlight Button -->
+                                    <button class="torch-btn" id="torchBtn" title="Bật/Tắt Đèn Flash">
+                                        <i class="fa-solid fa-bolt"></i> <span id="torchLabel">Flash: Tắt</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Right: Scanner Controls & Fallback Input -->
+                            <div class="scanner-actions">
+                                <div>
+                                    <h3 id="scannerTitle">Kích Hoạt Máy Quét</h3>
+                                    <p class="helper-text" id="scannerDesc">Hệ thống sử dụng cảm biến nhận diện trực tiếp mã vạch QR trên thân máy tại các xưởng sản xuất.</p>
+                                    
+                                    <div style="display:flex; gap:8px; margin-bottom:1.25rem;">
+                                        <button id="startScanBtn" class="btn btn-primary btn-large btn-glow full-width">
+                                            <i class="fa-solid fa-camera"></i> Bật Camera Quét QR
+                                        </button>
+                                        <button id="stopScanBtn" class="btn btn-outline danger hidden">
+                                            <i class="fa-solid fa-stop"></i> Dừng Camera
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Fallback Input: InputOTP (Khi mã QR bị mờ / trầy xước) -->
+                                <div class="fallback-input-card">
+                                    <div class="fallback-header">
+                                        <span><i class="fa-solid fa-keyboard" style="color:var(--primary);margin-right:6px;"></i>Nhập Nhanh Mã Máy (InputOTP)</span>
+                                        <span class="text-xs text-muted">Mã 3 - 4 số cuối</span>
+                                    </div>
+                                    <p class="text-xs text-muted" style="margin-bottom:10px;">Khi mã QR dính dầu mỡ hoặc trầy xước, hãy gõ 3-4 số cuối của máy (VD: 101 cho RIEKER-M101):</p>
+                                    
+                                    <div class="otp-container" id="otpGroup">
+                                        <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);font-weight:700;">RIEKER-M</span>
+                                        <input type="text" class="otp-digit" maxlength="1" data-index="0" placeholder="1" inputmode="numeric">
+                                        <input type="text" class="otp-digit" maxlength="1" data-index="1" placeholder="0" inputmode="numeric">
+                                        <input type="text" class="otp-digit" maxlength="1" data-index="2" placeholder="1" inputmode="numeric">
+                                        <button class="btn btn-primary" id="submitOtpBtn" style="height:52px;padding:0 14px;" title="Xác nhận mã máy">
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Quick selection chips of factory machines -->
+                                    <div style="margin-top:1rem;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <span class="text-xs text-muted" style="font-weight:600; text-transform:uppercase;">Thiết bị thường gặp tại xưởng:</span>
+                                        </div>
+                                        <div class="fallback-quick-chips" id="quickChips">
+                                            <button class="quick-chip-btn" data-id="RIEKER-M101">M101 (Máy May Kim)</button>
+                                            <button class="quick-chip-btn" data-id="RIEKER-M102">M102 (Máy Ép Thủy Lực)</button>
+                                            <button class="quick-chip-btn" data-id="RIEKER-M103">M103 (Máy Cắt Laser)</button>
+                                            <button class="quick-chip-btn" data-id="RIEKER-M104">M104 (Máy Gò Mũi Giày)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sonner / Stacked Toast Container -->
+    <div id="sonner-container" class="sonner-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/store.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/components.js"></script>
+    <script>
+        const user = window.auth.requireAuth();
+        if (user.role !== 'worker') {
+            window.location.href = 'index.html';
+        }
+        document.getElementById('sidebar-container').innerHTML = window.renderSidebar('qr');
+        document.getElementById('header-container').innerHTML = window.renderHeader();
+    </script>
+    <script src="scripts/scanner.js"></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rieker — Quản Lý Thiết Bị</title>
+    <meta name="description" content="Quản lý danh mục thiết bị, sinh mã QR in ấn công nghiệp Rieker Tech">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/views.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        .device-page-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 1.25rem;
+            align-items: start;
+        }
+        @media (max-width: 1024px) {
+            .device-page-grid { grid-template-columns: 1fr; }
+        }
+
+        .add-device-form { padding: 1.25rem; }
+        .add-device-form .panel-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 1.125rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .add-device-form .panel-title i { color: var(--primary); }
+        .add-device-form .form-group { margin-bottom: 0.875rem; }
+
+        .device-list-panel { padding: 1.25rem; }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.875rem;
+        }
+
+        .device-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .device-card:hover {
+            border-color: var(--border-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+
+        .device-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .device-card-header .device-id {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            letter-spacing: -0.02em;
+        }
+        .device-card-header .device-dept {
+            font-size: 0.68rem;
+            background: rgba(255,255,255,0.04);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .device-card .device-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-bright);
+        }
+
+        .qr-preview {
+            display: flex;
+            justify-content: center;
+            padding: 0.75rem;
+            background: #ffffff;
+            border-radius: var(--border-radius-xs);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .qr-preview canvas, .qr-preview img {
+            width: 120px !important;
+            height: 120px !important;
+        }
+
+        .device-card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .device-card-actions .btn {
+            flex: 1;
+            font-size: 0.75rem;
+            padding: 0.4rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+        .empty-state i {
+            font-size: 2.2rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+            opacity: 0.3;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area {
+                position: fixed;
+                left: 50%; top: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+            }
+            .print-area canvas, .print-area img {
+                width: 240px !important;
+                height: 240px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        <main class="main-content">
+            <div id="header-container"></div>
+            <div class="content-wrapper">
+                <section class="view-section">
+                    <div class="view-header">
+                        <div>
+                            <h1 class="view-title">Quản Lý Danh Mục Thiết Bị</h1>
+                            <p class="view-subtitle">Thêm máy mới, đồng bộ mã QR định danh và in tem nhãn tiêu chuẩn xưởng</p>
+                        </div>
+                    </div>
+
+                    <div class="device-page-grid">
+                        <!-- Left: Add Device Form -->
+                        <div class="add-device-form glass-panel">
+                            <div class="panel-title">
+                                <i class="fa-solid fa-plus-circle"></i> Thêm Thiết Bị Mới
+                            </div>
+                            <form id="addDeviceForm">
+                                <div class="form-group">
+                                    <label>Mã Thiết Bị (ID)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-microchip"></i>
+                                        <input type="text" id="deviceId" class="font-mono" placeholder="VD: RIEKER-M105" required>
+                                    </div>
+                                    <small class="helper">Mã kỹ thuật duy nhất không trùng lặp.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tên Thiết Bị</label>
+                                    <input type="text" id="deviceName" placeholder="VD: Máy May Kim Đôi Brother" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phân Xưởng / Dây Chuyền</label>
+                                    <div class="custom-select">
+                                        <select id="deviceDept" required>
+                                            <option value="" disabled selected>Chọn khu vực...</option>
+                                            <option value="Xưởng May">Xưởng May (Stitching)</option>
+                                            <option value="Xưởng Cắt">Xưởng Cắt (Cutting)</option>
+                                            <option value="Xưởng Đế">Xưởng Đế (Sole)</option>
+                                            <option value="Xưởng Gò">Xưởng Gò (Assembly)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary full-width" id="addDeviceBtn" style="margin-top:0.5rem;">
+                                    <i class="fa-solid fa-plus"></i> Thêm &amp; Khởi Tạo QR
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right: Device List -->
+                        <div class="device-list-panel glass-panel">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-server" style="color:var(--primary);margin-right:8px;"></i>Danh Mục Máy Xưởng</h3>
+                                <span class="text-xs text-muted font-mono" id="deviceCount">0 thiết bị</span>
+                            </div>
+                            <div class="device-grid" id="deviceGrid">
+                                <div class="empty-state">
+                                    <div class="spinner" style="border-width:2px;width:20px;height:20px;margin-bottom:0.5rem;"></div>
+                                    <p>Đang tải danh sách thiết bị...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden Print Area -->
+    <div class="print-area" id="printArea" style="display:none;"></div>
+
+    <!-- Sonner / Stacked Toast Container -->
+    <div id="sonner-container" class="sonner-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/store.js?v=4"></script>
+    <script src="scripts/ui.js?v=4"></script>
+    <script src="scripts/auth.js?v=4"></script>
+    <script src="scripts/components.js?v=4"></script>
+    <script>
+        const user = window.auth.requireAuth();
+        if (user.role !== 'admin') {
+            alert('Chỉ Quản trị viên mới được quản lý máy móc!');
+            window.location.href = 'index.html';
+        }
+    </script>
+    <script src="scripts/devices.js?v=4"></script>
+</body>
+</html>
