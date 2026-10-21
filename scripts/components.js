@@ -1,7 +1,44 @@
-// ============================================================
-// RIEKER TECH — REUSABLE UI COMPONENTS (SHADCN / LINEAR / VERCEL)
-// Sidebar, Top Header, Machine Quick-View Drawer, Sonner Hooks
-// ============================================================
+// Theme Management (Light / Dark Mode with localStorage)
+function getSavedTheme() {
+    return localStorage.getItem('rieker_theme') || 'dark';
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        if (document.body) document.body.classList.add('theme-light');
+    } else {
+        root.removeAttribute('data-theme');
+        if (document.body) document.body.classList.remove('theme-light');
+    }
+    localStorage.setItem('rieker_theme', theme);
+
+    // Update toggle icon if in DOM
+    const icon = document.getElementById('themeToggleIcon');
+    const btn = document.getElementById('themeToggleBtn');
+    if (icon) {
+        icon.className = theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+    }
+    if (btn) {
+        btn.setAttribute('title', theme === 'light' ? 'Chuyển sang chế độ Tối (Dark)' : 'Chuyển sang chế độ Sáng (Light)');
+    }
+
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+}
+
+function toggleTheme() {
+    const current = getSavedTheme();
+    const next = current === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+}
+
+// Immediately apply theme on script run to avoid FOUC
+applyTheme(getSavedTheme());
+
+window.getSavedTheme = getSavedTheme;
+window.applyTheme = applyTheme;
+window.toggleTheme = toggleTheme;
 
 function renderSidebar(activePage) {
     const user = window.auth ? window.auth.getCurrentUser() : { role: 'worker', name: 'Công Nhân', avatar: '' };
@@ -11,13 +48,19 @@ function renderSidebar(activePage) {
     if (user.role === 'admin') {
         navItems += `
             <a href="index.html" class="nav-item ${activePage === 'dashboard' ? 'active' : ''}">
-                <i class="fa-solid fa-chart-pie"></i><span>Thống Kê Báo Cáo</span>
+                <i class="fa-solid fa-chart-pie"></i><span>Tổng Quan Hệ Thống</span>
+            </a>
+            <a href="analytics.html" class="nav-item ${activePage === 'analytics' ? 'active' : ''}">
+                <i class="fa-solid fa-chart-line"></i><span>Thống Kê Sự Cố</span>
             </a>
             <a href="devices.html" class="nav-item ${activePage === 'devices' ? 'active' : ''}">
                 <i class="fa-solid fa-server"></i><span>Quản Lý Máy Móc</span>
             </a>
             <a href="users.html" class="nav-item ${activePage === 'users' ? 'active' : ''}">
                 <i class="fa-solid fa-users"></i><span>Quản Lý Người Dùng</span>
+            </a>
+            <a href="profile.html" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
+                <i class="fa-solid fa-user-shield"></i><span>Hồ Sơ &amp; Bảo Mật</span>
             </a>
         `;
     } else if (user.role === 'technician') {
@@ -27,6 +70,9 @@ function renderSidebar(activePage) {
             </a>
             <a href="history.html" class="nav-item ${activePage === 'history' ? 'active' : ''}">
                 <i class="fa-solid fa-clock-rotate-left"></i><span>Lịch Sử Bảo Trì</span>
+            </a>
+            <a href="profile.html" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
+                <i class="fa-solid fa-user-shield"></i><span>Hồ Sơ &amp; Bảo Mật</span>
             </a>
         `;
     } else { // Worker
@@ -38,12 +84,15 @@ function renderSidebar(activePage) {
                 <i class="fa-solid fa-qrcode"></i><span>Báo Hỏng (QR)</span>
             </a>
             <a href="request-form.html" class="nav-item ${activePage === 'form' ? 'active' : ''}">
-                <i class="fa-solid fa-file-pen"></i><span>Tạo Yêu Cầu Siêu Tốc</span>
+                <i class="fa-solid fa-file-pen"></i><span>Tạo Yêu Cầu Nhanh</span>
+            </a>
+            <a href="profile.html" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
+                <i class="fa-solid fa-user-shield"></i><span>Hồ Sơ &amp; Bảo Mật</span>
             </a>
         `;
     }
 
-    const dept = user.role === 'admin' ? 'Hệ thống Quản trị' : (user.role === 'technician' ? 'Đội Kỹ thuật Cơ điện' : 'Phân xưởng Sản xuất');
+    const dept = user.role === 'admin' ? 'Hệ thống Quản trị' : (user.role === 'technician' ? 'Đội Kỹ thuật Cơ điện' : (user.department || 'Phân xưởng Sản xuất'));
 
     return `
         <aside class="sidebar">
@@ -52,14 +101,13 @@ function renderSidebar(activePage) {
                     <i class="fa-solid fa-industry"></i>
                 </div>
                 <h2>Rieker<span class="text-gradient">Tech</span></h2>
-                <span class="system-badge">v2.0</span>
             </div>
             <nav class="sidebar-nav">
                 <span class="nav-section-label">Menu Điều Hướng</span>
                 ${navItems}
             </nav>
             <div class="sidebar-footer">
-                <div class="user-profile" onclick="if(confirm('Bạn có muốn đăng xuất?')){ localStorage.removeItem('auth_user'); window.location.replace('login.html'); }">
+                <a href="profile.html" class="user-profile" title="Xem thông tin tài khoản & đổi mật khẩu" style="text-decoration:none;">
                     <div class="avatar">
                         <img src="${user.avatar || 'https://ui-avatars.com/api/?name=User&background=27272a&color=fff'}" alt="Avatar">
                     </div>
@@ -67,13 +115,18 @@ function renderSidebar(activePage) {
                         <h4>${user.name}</h4>
                         <p>${dept}</p>
                     </div>
-                </div>
+                    <i class="fa-solid fa-chevron-right" style="margin-left:auto;font-size:0.7rem;color:var(--text-muted);"></i>
+                </a>
             </div>
         </aside>
     `;
 }
 
 function renderHeader() {
+    const currentTheme = getSavedTheme();
+    const themeIcon = currentTheme === 'light' ? 'fa-moon' : 'fa-sun';
+    const themeTitle = currentTheme === 'light' ? 'Chuyển sang chế độ Tối (Dark)' : 'Chuyển sang chế độ Sáng (Light)';
+
     return `
         <header class="top-header">
             <div class="header-search" onclick="window.triggerCommandPalette && window.triggerCommandPalette()">
@@ -82,6 +135,12 @@ function renderHeader() {
                 <kbd>Ctrl K</kbd>
             </div>
             <div class="header-actions">
+                <!-- Dark / Light Mode Toggle Button -->
+                <button class="icon-btn tooltip" id="themeToggleBtn" title="${themeTitle}" onclick="window.toggleTheme && window.toggleTheme()">
+                    <i class="fa-solid ${themeIcon}" id="themeToggleIcon"></i>
+                </button>
+
+                <!-- Notifications Dropdown -->
                 <div class="notification-wrapper" style="position:relative; display:inline-block;">
                     <button class="icon-btn tooltip" id="notifBtn" title="Thông báo bảo trì" onclick="window.toggleNotifModal()">
                         <i class="fa-regular fa-bell"></i>
@@ -95,6 +154,13 @@ function renderHeader() {
                         <div id="notifList" style="max-height:280px; overflow-y:auto; font-size:12px; display:flex; flex-direction:column; gap:4px;">Đang tải...</div>
                     </div>
                 </div>
+
+                <!-- Profile Quick Link -->
+                <a href="profile.html" class="icon-btn tooltip" title="Hồ sơ tài khoản & Đổi mật khẩu">
+                    <i class="fa-regular fa-user"></i>
+                </a>
+
+                <!-- Logout Button -->
                 <button class="icon-btn tooltip" onclick="if(confirm('Đăng xuất khỏi hệ thống?')){ localStorage.removeItem('auth_user'); window.location.replace('login.html'); }" title="Đăng xuất">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 </button>
@@ -102,6 +168,9 @@ function renderHeader() {
         </header>
     `;
 }
+
+window.renderSidebar = renderSidebar;
+window.renderHeader = renderHeader;
 
 // ─── Machine Quick-View Drawer / Sheet (shadcn/ui style) ────
 window.ensureMachineDrawerInDOM = function() {
@@ -161,18 +230,81 @@ window.openMachineDrawer = async function(machineId, details = null) {
         device = allDevices.find(d => d.machine_id.toUpperCase() === machineId.toUpperCase());
     }
 
-    // Check if machine is under maintenance
-    let isUnderMaintenance = false;
-    if (window.checkMachineIsUnderMaintenance) {
-        isUnderMaintenance = await window.checkMachineIsUnderMaintenance(machineId);
+    // Check machine validation (Existence + Duplicate Maintenance)
+    let validation = null;
+    if (window.validateMachineStatus) {
+        validation = await window.validateMachineStatus(machineId);
     }
+
+    if (validation && !validation.valid && validation.code === 'NOT_FOUND') {
+        panel.innerHTML = `
+            <div class="sheet-header">
+                <div class="sheet-title" style="color:var(--p1-red);">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Mã Thiết Bị Không Tồn Tại</span>
+                </div>
+                <button class="sheet-close-btn" onclick="window.closeMachineDrawer()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="sheet-body">
+                <div style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.35); border-radius:var(--border-radius-sm); padding:1.25rem; text-align:center;">
+                    <i class="fa-solid fa-circle-xmark" style="color:var(--p1-red); font-size:2.5rem; margin-bottom:10px;"></i>
+                    <h3 style="color:var(--p1-red); font-size:1rem; font-weight:700; margin-bottom:6px;">Lỗi: Mã thiết bị '${machineId}' không tồn tại trên hệ thống nhà máy!</h3>
+                    <p class="text-xs text-muted">Vui lòng kiểm tra lại tem QR trên thân máy hoặc nhập lại mã số chính xác từ danh mục xưởng.</p>
+                </div>
+            </div>
+            <div class="sheet-footer">
+                <button class="btn btn-secondary full-width" onclick="window.closeMachineDrawer()">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Quét Hoặc Nhập Mã Khác
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    const isUnderMaintenance = validation && validation.code === 'UNDER_MAINTENANCE';
+    const activeReq = validation ? validation.activeRequest : null;
+    device = (validation && validation.device) || device;
 
     const deviceName = device ? device.device_name : 'Thiết bị sản xuất ' + machineId;
     const department = device ? device.department : 'Xưởng sản xuất chung';
 
     const statusBadge = isUnderMaintenance
-        ? `<span class="badge-status status-p1"><span class="led-dot p1-danger"></span> ĐANG CÓ PHIẾU BẢO TRÌ</span>`
+        ? `<span class="badge-status status-p1"><span class="led-dot p1-danger"></span> ĐANG BẢO TRÌ (${activeReq ? activeReq.request_id : 'PENDING'})</span>`
         : `<span class="badge-status status-completed"><span class="led-dot success"></span> SẴN SÀNG HOẠT ĐỘNG</span>`;
+
+    const warningBox = isUnderMaintenance
+        ? `
+            <div style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.35); border-radius:var(--border-radius-sm); padding:0.875rem 1rem;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <span class="led-dot p1-danger"></span>
+                    <strong style="color:var(--p1-red); font-size:0.8125rem;">Máy Đang Trong Quá Trình Bảo Trì</strong>
+                </div>
+                <p class="text-xs text-muted" style="line-height:1.4;">
+                    Máy <strong>${machineId}</strong> hiện đang trong quá trình bảo trì (Mã phiếu: <strong class="table-req-id" style="color:var(--p1-red);">${activeReq ? activeReq.request_id : ''}</strong>). Không thể tạo thêm yêu cầu mới cho đến khi kỹ thuật viên hoàn tất!
+                </p>
+            </div>
+        `
+        : `
+            <div style="background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.2); border-radius:var(--border-radius-sm); padding:0.875rem 1rem;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <span class="led-dot p1-danger"></span>
+                    <strong style="color:var(--p1-red); font-size:0.8125rem;">Quy trình Báo Hỏng Khẩn Cấp</strong>
+                </div>
+                <p class="text-xs text-muted">Nếu thiết bị gặp sự cố dừng dây chuyền (P1) hoặc hỏng nhẹ (P2), bấm nút đỏ bên dưới để chuyển sang form báo hỏng nhanh.</p>
+            </div>
+        `;
+
+    const actionButton = isUnderMaintenance
+        ? `
+            <button class="btn btn-secondary btn-large full-width" disabled style="opacity:0.5; cursor:not-allowed;" title="Máy đang có phiếu bảo trì">
+                <i class="fa-solid fa-lock"></i> KHÓA BÁO HỎNG (ĐANG BẢO TRÌ)
+            </button>
+        `
+        : `
+            <button class="btn btn-emergency btn-large full-width" onclick="window.proceedToReport('${machineId}')">
+                <i class="fa-solid fa-triangle-exclamation"></i> TẠO YÊU CẦU BÁO HỎNG KHẨN CẤP
+            </button>
+        `;
 
     panel.innerHTML = `
         <div class="sheet-header">
@@ -207,18 +339,10 @@ window.openMachineDrawer = async function(machineId, details = null) {
                 </div>
             </div>
 
-            <div style="background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.2); border-radius:var(--border-radius-sm); padding:0.875rem 1rem;">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                    <span class="led-dot p1-danger"></span>
-                    <strong style="color:var(--p1-red); font-size:0.8125rem;">Quy trình Báo Hỏng Khẩn Cấp</strong>
-                </div>
-                <p class="text-xs text-muted">Nếu thiết bị gặp sự cố dừng dây chuyền (P1) hoặc hỏng nhẹ (P2), bấm nút đỏ bên dưới để chuyển sang form báo hỏng siêu tốc (10-15s).</p>
-            </div>
+            ${warningBox}
         </div>
         <div class="sheet-footer">
-            <button class="btn btn-emergency btn-large full-width" onclick="window.proceedToReport('${machineId}')">
-                <i class="fa-solid fa-triangle-exclamation"></i> TẠO YÊU CẦU BÁO HỎNG KHẨN CẤP
-            </button>
+            ${actionButton}
             <button class="btn btn-secondary full-width" onclick="window.closeMachineDrawer()">
                 <i class="fa-solid fa-arrow-rotate-left"></i> Quét Mã Máy Khác
             </button>

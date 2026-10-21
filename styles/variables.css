@@ -7,90 +7,147 @@
 
 :root {
     /* Fonts */
-    --font-ui:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     /* Core Brand Accents */
-    --primary:        #00d4ff;
-    --primary-dim:    #0284c7;
-    --primary-glow:   rgba(0, 212, 255, 0.2);
+    --primary: #00d4ff;
+    --primary-dim: #0284c7;
+    --primary-glow: rgba(0, 212, 255, 0.2);
     --primary-subtle: rgba(0, 212, 255, 0.08);
 
-    --accent-purple:  #8b5cf6;
+    --accent-purple: #8b5cf6;
 
     /* High-Contrast Industrial Status Palette */
     /* 🔴 P1 - Dừng máy / Khẩn cấp: Red (#EF4444) */
-    --p1-red:         #ef4444;
-    --p1-bg:          rgba(239, 68, 68, 0.12);
-    --p1-border:      rgba(239, 68, 68, 0.35);
-    --p1-glow:        rgba(239, 68, 68, 0.3);
+    --p1-red: #ef4444;
+    --p1-bg: rgba(239, 68, 68, 0.12);
+    --p1-border: rgba(239, 68, 68, 0.35);
+    --p1-glow: rgba(239, 68, 68, 0.3);
 
     /* 🟠 P2 - Hỏng nhẹ / Vẫn chạy được: Amber (#F59E0B) */
-    --p2-amber:       #f59e0b;
-    --p2-bg:          rgba(245, 158, 11, 0.12);
-    --p2-border:      rgba(245, 158, 11, 0.35);
-    --p2-glow:        rgba(245, 158, 11, 0.25);
+    --p2-amber: #f59e0b;
+    --p2-bg: rgba(245, 158, 11, 0.12);
+    --p2-border: rgba(245, 158, 11, 0.35);
+    --p2-glow: rgba(245, 158, 11, 0.25);
 
     /* 🟢 Hoạt động tốt / Đã sửa xong: Emerald (#10B981) */
-    --success:        #10b981;
-    --success-bg:     rgba(16, 185, 129, 0.12);
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.12);
     --success-border: rgba(16, 185, 129, 0.35);
-    --success-glow:   rgba(16, 185, 129, 0.25);
+    --success-glow: rgba(16, 185, 129, 0.25);
 
     /* 🔵 Đang xử lý / Kỹ thuật đang tới: Cyan/Sky (#06B6D4 / #0EA5E9) */
-    --info:           #06b6d4;
-    --info-bg:        rgba(6, 182, 212, 0.12);
-    --info-border:    rgba(6, 182, 212, 0.35);
-    --info-glow:      rgba(6, 182, 212, 0.25);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.12);
+    --info-border: rgba(6, 182, 212, 0.35);
+    --info-glow: rgba(6, 182, 212, 0.25);
 
     /* Semantic Aliases */
-    --danger:         var(--p1-red);
-    --danger-bg:      var(--p1-bg);
-    --danger-glow:    var(--p1-glow);
+    --danger: var(--p1-red);
+    --danger-bg: var(--p1-bg);
+    --danger-glow: var(--p1-glow);
 
-    --warning:        var(--p2-amber);
-    --warning-bg:     var(--p2-bg);
-    --warning-glow:   var(--p2-glow);
+    --warning: var(--p2-amber);
+    --warning-bg: var(--p2-bg);
+    --warning-glow: var(--p2-glow);
 
     /* Sharp Industrial Dark Layers (Zinc & Slate) */
-    --bg-base:        #09090b; /* zinc-950 */
-    --bg-main:        #0c0e14; /* deep workspace */
-    --bg-surface:     #12141c; /* crisp card surface */
-    --bg-elevated:    #181a24; /* input, dropdown, inner card */
-    --bg-overlay:     #202432; /* hover state */
+    --bg-base: #09090b;
+    /* zinc-950 */
+    --bg-main: #0c0e14;
+    /* deep workspace */
+    --bg-surface: #12141c;
+    /* crisp card surface */
+    --bg-elevated: #181a24;
+    /* input, dropdown, inner card */
+    --bg-overlay: #202432;
+    /* hover state */
 
     /* Ultra-Crisp 1px Borders */
-    --border-subtle:  #27272a; /* border-zinc-800 */
-    --border-dim:     rgba(255, 255, 255, 0.08);
-    --border-bright:  rgba(255, 255, 255, 0.16);
-    --border-glass:   rgba(6, 182, 212, 0.3);
+    --border-subtle: #27272a;
+    /* border-zinc-800 */
+    --border-dim: rgba(255, 255, 255, 0.08);
+    --border-bright: rgba(255, 255, 255, 0.16);
+    --border-glass: rgba(6, 182, 212, 0.3);
 
     /* Text */
-    --text-primary:   #f4f4f5; /* zinc-100 */
-    --text-secondary: #a1a1aa; /* zinc-400 */
-    --text-muted:     #71717a; /* zinc-500 */
-    --text-bright:    #ffffff;
+    --text-primary: #f4f4f5;
+    /* zinc-100 */
+    --text-secondary: #a1a1aa;
+    /* zinc-400 */
+    --text-muted: #71717a;
+    /* zinc-500 */
+    --text-bright: #ffffff;
 
     /* Sharp Industrial Geometry (reduced from rounded-2xl down to rounded-md 6-8px) */
     --border-radius-xs: 4px;
-    --border-radius-sm: 6px; /* rounded-md for cards, buttons */
-    --border-radius-md: 8px; /* rounded-md/lg */
+    --border-radius-sm: 6px;
+    /* rounded-md for cards, buttons */
+    --border-radius-md: 8px;
+    /* rounded-md/lg */
     --border-radius-lg: 10px;
 
     /* Layout dimensions */
-    --sidebar-width:  250px;
-    --header-height:  58px;
+    --sidebar-width: 250px;
+    --header-height: 58px;
 
     /* Shadows: subtle and crisp instead of thick blurry drops */
-    --shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-card:    0 4px 16px rgba(0, 0, 0, 0.5);
-    --shadow-glow:    0 0 16px var(--primary-glow);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 16px var(--primary-glow);
 
-    --transition:     all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    --bg-header: rgba(9, 9, 11, 0.85);
+    --table-hover-bg: rgba(255, 255, 255, 0.02);
+
+    --transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Light Mode Theme (Industrial Clean Slate) ──────────── */
+/* Tông xám công nghiệp: bg-slate-50, text slate-900, card white viền slate-200 */
+:root[data-theme="light"],
+[data-theme="light"],
+body.theme-light,
+:root.theme-light {
+    --bg-base: #f8fafc;        /* slate-50 */
+    --bg-main: #f1f5f9;        /* slate-100 */
+    --bg-surface: #ffffff;     /* card white */
+    --bg-elevated: #f8fafc;    /* slate-50 input/inner */
+    --bg-overlay: #e2e8f0;     /* slate-200 hover */
+    --bg-header: rgba(255, 255, 255, 0.92);
+
+    /* Ultra-Crisp Slate Borders */
+    --border-subtle: #e2e8f0;  /* slate-200 */
+    --border-dim: #cbd5e1;     /* slate-300 */
+    --border-bright: #94a3b8;  /* slate-400 */
+    --border-glass: rgba(2, 132, 199, 0.25);
+
+    /* High-legibility Slate Typography */
+    --text-primary: #0f172a;   /* slate-900 */
+    --text-secondary: #334155; /* slate-700 */
+    --text-muted: #64748b;     /* slate-500 */
+    --text-bright: #020617;    /* slate-950 */
+
+    /* Shadows: clean soft elevation */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+    --shadow-glow: 0 0 16px rgba(0, 212, 255, 0.2);
+
+    --table-hover-bg: rgba(15, 23, 42, 0.03);
+}
+
+[data-theme="light"] body {
+    color: var(--text-primary);
+    background-color: var(--bg-main);
+    background-image:
+        radial-gradient(ellipse 70% 40% at 50% -10%, rgba(2, 132, 199, 0.06), transparent 70%),
+        radial-gradient(ellipse 40% 30% at 90% 100%, rgba(139, 92, 246, 0.04), transparent 70%);
 }
 
 /* ─── Reset & Base ───────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -167,30 +224,75 @@ code,
 }
 
 @keyframes led-ping {
-    75%, 100% {
+
+    75%,
+    100% {
         transform: scale(2.2);
         opacity: 0;
     }
 }
 
 /* ─── Utilities ──────────────────────────────────────────── */
-.hidden      { display: none !important; }
-.mb-1        { margin-bottom: 0.25rem; }
-.mb-2        { margin-bottom: 0.5rem; }
-.mb-3        { margin-bottom: 1rem; }
-.mb-4        { margin-bottom: 1.5rem; }
-.ml-2        { margin-left: 0.5rem; }
-.mr-2        { margin-right: 0.5rem; }
-.text-center { text-align: center; }
-.text-right  { text-align: right; }
-.text-muted  { color: var(--text-muted); }
-.text-sm     { font-size: 0.8125rem; }
-.text-xs     { font-size: 0.72rem; }
-.full-width  { width: 100%; }
-.col-span-2  { grid-column: span 2; }
+.hidden {
+    display: none !important;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-sm {
+    font-size: 0.8125rem;
+}
+
+.text-xs {
+    font-size: 0.72rem;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.col-span-2 {
+    grid-column: span 2;
+}
 
 @media (min-width: 768px) {
-    .md-col-span-1 { grid-column: span 1; }
+    .md-col-span-1 {
+        grid-column: span 1;
+    }
 }
 
 .text-gradient {
@@ -202,7 +304,20 @@ code,
 }
 
 /* ─── Scrollbars (Vercel Style) ─────────────────────────── */
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-surface); }
-::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+}

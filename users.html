@@ -11,6 +11,14 @@
     <link rel="stylesheet" href="styles/layout.css">
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/views.css">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('rieker_theme') || 'dark';
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <style>
         .users-page-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; align-items: start; }
         .user-list-panel { padding: 1.25rem; }
@@ -67,6 +75,7 @@
                                     <tr>
                                         <th>Họ Và Tên</th>
                                         <th>Tên Đăng Nhập</th>
+                                        <th>Email Liên Kết</th>
                                         <th>Vai Trò</th>
                                         <th>Bộ Phận Trực Thuộc</th>
                                         <th>Trạng Thái</th>
@@ -102,10 +111,10 @@
 <div id="sonner-container" class="sonner-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="scripts/store.js?v=4"></script>
-<script src="scripts/ui.js?v=4"></script>
-<script src="scripts/auth.js?v=4"></script>
-<script src="scripts/components.js?v=4"></script>
+<script src="scripts/store.js?v=9"></script>
+<script src="scripts/ui.js?v=9"></script>
+<script src="scripts/auth.js?v=9"></script>
+<script src="scripts/components.js?v=9"></script>
 <script>
     const user = window.auth.requireAuth();
     if (user.role !== 'admin') {
@@ -130,13 +139,16 @@
         const tbody = document.getElementById('usersBody');
         document.getElementById('userCount').textContent = `${data.length} tài khoản`;
         if (data.length === 0) {
-            tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><i class="fa-solid fa-users-slash"></i>Chưa có tài khoản nào</td></tr>`;
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="7"><i class="fa-solid fa-users-slash"></i>Chưa có tài khoản nào</td></tr>`;
             return;
         }
-        tbody.innerHTML = data.map(u => `
+        tbody.innerHTML = data.map(u => {
+            const userEmail = u.email || (window.auth && window.auth.getUserEmail(u.id)) || (window.auth && window.auth.getUserEmail(u.username)) || '—';
+            return `
             <tr>
                 <td><strong>${u.name}</strong></td>
                 <td><code class="font-mono">${u.username}</code></td>
+                <td><span class="font-mono text-xs" style="color:var(--primary);">${userEmail}</span></td>
                 <td><span class="role-badge ${roleBadge[u.role] || 'role-worker'}">${roleLabel[u.role] || u.role}</span></td>
                 <td>${u.department || getDeptFromRole(u.role)}</td>
                 <td>

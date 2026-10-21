@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.length === 0) {
             const msg = user.role === 'worker'
-                ? 'Bạn chưa có yêu cầu báo hỏng nào. <a href="request-form.html" style="color:var(--primary);text-decoration:underline;">Tạo yêu cầu siêu tốc</a>'
+                ? 'Bạn chưa có yêu cầu báo hỏng nào. <a href="request-form.html" style="color:var(--primary);text-decoration:underline;">Tạo yêu cầu nhanh</a>'
                 : 'Chưa có yêu cầu báo hỏng nào đang xử lý trong ca trực';
             tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:2.5rem 1rem;">${msg}</td></tr>`;
             return;

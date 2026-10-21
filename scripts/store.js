@@ -102,33 +102,74 @@ window.deleteMaintenanceRequest = deleteMaintenanceRequest;
 // Devices (Thiết bị) Management
 // ==========================================
 async function checkDeviceExists(machineId) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('devices')
-            .select('machine_id')
-            .eq('machine_id', machineId)
-            .single();
-        if (error || !data) return false;
-        return true;
-    } catch (err) {
-        return false;
-    }
+    const res = await validateMachineStatus(machineId);
+    return res.code !== 'NOT_FOUND';
 }
 
 async function checkMachineIsUnderMaintenance(machineId) {
+    const res = await validateMachineStatus(machineId);
+    return res.code === 'UNDER_MAINTENANCE';
+}
+
+async function validateMachineStatus(machineId) {
+    if (!machineId) {
+        return { valid: false, code: 'NOT_FOUND', error: 'Vui lòng nhập hoặc quét Mã Thiết bị!' };
+    }
+
+    const cleanId = machineId.trim().toUpperCase();
+
+    // 1. Kiểm tra tồn tại của Thiết bị (Machine Existence Check)
+    let device = null;
     try {
         const { data, error } = await supabaseClient
-            .from('maintenance_requests')
-            .select('status')
-            .eq('machine_id', machineId)
-            .in('status', ['pending', 'processing'])
-            .limit(1);
-        
-        if (error || !data) return false;
-        return data.length > 0;
-    } catch (err) {
-        return false;
+            .from('devices')
+            .select('*')
+            .ilike('machine_id', cleanId)
+            .maybeSingle();
+
+        if (!error && data) {
+            device = data;
+        }
+    } catch (e) {
+        console.warn('Lỗi kiểm tra bảng devices:', e);
     }
+
+    if (!device) {
+        return {
+            valid: false,
+            code: 'NOT_FOUND',
+            error: `Lỗi: Mã thiết bị '${cleanId}' không tồn tại trên hệ thống nhà máy!`
+        };
+    }
+
+    // 2. Chống trùng lặp Yêu cầu Bảo trì (Duplicate Prevention)
+    try {
+        const { data: activeRequests, error: reqErr } = await supabaseClient
+            .from('maintenance_requests')
+            .select('request_id, status, created_at, issue_level')
+            .eq('machine_id', device.machine_id)
+            .in('status', ['pending', 'processing', 'in_progress'])
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (!reqErr && activeRequests && activeRequests.length > 0) {
+            const activeReq = activeRequests[0];
+            return {
+                valid: false,
+                code: 'UNDER_MAINTENANCE',
+                device: device,
+                activeRequest: activeReq,
+                error: `Máy ${cleanId} hiện đang trong quá trình bảo trì (Mã phiếu: ${activeReq.request_id}). Không thể tạo thêm yêu cầu mới!`
+            };
+        }
+    } catch (e) {
+        console.warn('Lỗi kiểm tra trùng lặp phiếu bảo trì:', e);
+    }
+
+    return {
+        valid: true,
+        device: device
+    };
 }
 
 async function fetchDevices() {
@@ -173,6 +214,7 @@ async function deleteDevice(id) {
     }
 }
 
+window.validateMachineStatus = validateMachineStatus;
 window.checkDeviceExists = checkDeviceExists;
 window.checkMachineIsUnderMaintenance = checkMachineIsUnderMaintenance;
 window.fetchDevices = fetchDevices;

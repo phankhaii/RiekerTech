@@ -18,6 +18,117 @@ document.addEventListener('DOMContentLoaded', () => {
     const maintenanceForm = document.getElementById('maintenanceForm');
     const descTextarea = document.getElementById('issueDescription');
     const submitBtn = document.getElementById('submitReportBtn');
+    const machineValidationMsg = document.getElementById('machineValidationMsg');
+
+    // ─── Machine Async Validation (Prompt 3) ─────────────────
+    let validationTimer = null;
+
+    async function validateAndDisplayMachine(mId, showToastAlert = true) {
+        if (!mId) {
+            if (machineValidationMsg) machineValidationMsg.style.display = 'none';
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+            return false;
+        }
+
+        const cleanId = mId.trim().toUpperCase();
+        if (!window.validateMachineStatus) return true;
+
+        const res = await window.validateMachineStatus(cleanId);
+
+        if (!res.valid) {
+            // Khóa nút 'Gửi yêu cầu'
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.45';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+
+            if (res.code === 'NOT_FOUND') {
+                const errMsg = `Lỗi: Mã thiết bị '${cleanId}' không tồn tại trên hệ thống nhà máy!`;
+                if (machineValidationMsg) {
+                    machineValidationMsg.style.display = 'block';
+                    machineValidationMsg.style.background = 'rgba(239, 68, 68, 0.12)';
+                    machineValidationMsg.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                    machineValidationMsg.style.color = 'var(--p1-red)';
+                    machineValidationMsg.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> <strong>${errMsg}</strong>`;
+                }
+
+                if (showToastAlert && window.showSonnerToast) {
+                    window.showSonnerToast({
+                        title: 'Mã Thiết Bị Không Tồn Tại',
+                        description: errMsg,
+                        machineId: cleanId,
+                        level: 'danger',
+                        playSound: true
+                    });
+                }
+            } else if (res.code === 'UNDER_MAINTENANCE') {
+                const reqId = res.activeRequest ? res.activeRequest.request_id : '';
+                const warnMsg = `Máy ${cleanId} hiện đang trong quá trình bảo trì (Mã phiếu: ${reqId}). Không thể tạo thêm yêu cầu mới!`;
+                if (machineValidationMsg) {
+                    machineValidationMsg.style.display = 'block';
+                    machineValidationMsg.style.background = 'rgba(239, 68, 68, 0.12)';
+                    machineValidationMsg.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                    machineValidationMsg.style.color = 'var(--p1-red)';
+                    machineValidationMsg.innerHTML = `<i class="fa-solid fa-ban"></i> <strong>${warnMsg}</strong>`;
+                }
+
+                if (showToastAlert && window.showSonnerToast) {
+                    window.showSonnerToast({
+                        title: 'Trùng Lặp Yêu Cầu Bảo Trì',
+                        description: warnMsg,
+                        machineId: cleanId,
+                        level: 'danger',
+                        playSound: true
+                    });
+                }
+            }
+            return false;
+        }
+
+        // Hợp lệ: Mở khóa nút 'Gửi yêu cầu'
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+
+        const dev = res.device;
+        if (machineValidationMsg) {
+            machineValidationMsg.style.display = 'block';
+            machineValidationMsg.style.background = 'rgba(16, 185, 129, 0.12)';
+            machineValidationMsg.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+            machineValidationMsg.style.color = 'var(--success)';
+            machineValidationMsg.innerHTML = `<i class="fa-solid fa-circle-check"></i> Thiết bị hợp lệ: <strong>${dev ? dev.device_name : cleanId}</strong> (${dev ? dev.department : ''})`;
+        }
+
+        if (dev && dev.department && departmentSelect) {
+            departmentSelect.value = dev.department;
+        }
+
+        return true;
+    }
+
+    if (machineIdInput) {
+        machineIdInput.addEventListener('input', (e) => {
+            clearTimeout(validationTimer);
+            const val = e.target.value.trim();
+            validationTimer = setTimeout(() => {
+                if (val.length >= 3) {
+                    validateAndDisplayMachine(val, false);
+                }
+            }, 350);
+        });
+
+        machineIdInput.addEventListener('blur', (e) => {
+            const val = e.target.value.trim();
+            if (val) validateAndDisplayMachine(val, true);
+        });
+    }
 
     // ─── Pre-fill Machine ID from URL or temp storage ─────────
     const urlParams = new URLSearchParams(window.location.search);
@@ -27,38 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (urlMachineId && machineIdInput) {
         machineIdInput.value = urlMachineId.trim().toUpperCase();
-        window.showSonnerToast && window.showSonnerToast({
-            title: 'Đã Nhận Diện Mã Máy',
-            description: `Nạp dữ liệu thiết bị [${urlMachineId}]`,
-            machineId: urlMachineId,
-            level: 'info',
-            playSound: false
-        });
-        autoDetectDepartment(urlMachineId);
+        validateAndDisplayMachine(urlMachineId, true);
     } else if (tempId && machineIdInput) {
         machineIdInput.value = tempId.trim().toUpperCase();
         localStorage.removeItem('temp_scanned_id');
-        window.showSonnerToast && window.showSonnerToast({
-            title: 'Quét Thành Công',
-            description: `Nạp thông tin máy từ Camera: [${tempId}]`,
-            machineId: tempId,
-            level: 'info',
-            playSound: false
-        });
-        autoDetectDepartment(tempId);
-    }
-
-    async function autoDetectDepartment(mId) {
-        if (!departmentSelect || !window.fetchDevices) return;
-        try {
-            const devices = await window.fetchDevices();
-            const found = devices.find(d => d.machine_id.toUpperCase() === mId.toUpperCase());
-            if (found && found.department) {
-                departmentSelect.value = found.department;
-            }
-        } catch (e) {
-            console.warn(e);
-        }
+        validateAndDisplayMachine(tempId, true);
     }
 
     // ─── Segmented Radio Group (P1 vs P2) ─────────────────────
@@ -192,26 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:16px;height:16px;margin-right:8px;"></div> Đang truyền tín hiệu...';
 
-            // Verify device exists
-            if (window.checkDeviceExists) {
-                const isReal = await window.checkDeviceExists(mId);
-                if (!isReal) {
-                    alert(`Lỗi: Thiết bị [${mId}] không tồn tại trong danh mục xưởng. Vui lòng kiểm tra lại!`);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnHtml;
-                    return;
-                }
-            }
-
-            // Check if machine is already under maintenance
-            if (window.checkMachineIsUnderMaintenance) {
-                const isBusy = await window.checkMachineIsUnderMaintenance(mId);
-                if (isBusy) {
-                    alert(`Thiết bị [${mId}] hiện đang có phiếu bảo trì đang xử lý. Vui lòng chờ kỹ thuật viên hoàn tất!`);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnHtml;
-                    return;
-                }
+            // Strict Async Validation (Prompt 3: Existence + Duplicate Maintenance)
+            const isValid = await validateAndDisplayMachine(mId, true);
+            if (!isValid) {
+                submitBtn.innerHTML = originalBtnHtml;
+                return;
             }
 
             const rName = reporterNameInput ? reporterNameInput.value : (user ? user.name : 'Công Nhân');

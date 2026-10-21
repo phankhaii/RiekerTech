@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rieker — Hồ Sơ Cá Nhân &amp; Bảo Mật</title>
+    <meta name="description" content="Quản lý thông tin cá nhân và thiết lập mật khẩu bảo mật hệ thống Rieker Tech">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/views.css">
+    <script>
+        // Pre-apply saved theme
+        (function() {
+            const saved = localStorage.getItem('rieker_theme') || 'dark';
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+    <style>
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .profile-grid { grid-template-columns: 1fr; }
+        }
+
+        .profile-panel {
+            padding: 1.5rem;
+        }
+
+        .profile-header-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .profile-avatar-box {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            border: 2px solid var(--border-subtle);
+            flex-shrink: 0;
+            background: var(--bg-elevated);
+        }
+
+        .profile-avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: var(--border-radius-xs);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            letter-spacing: 0.04em;
+        }
+
+        .role-pill.admin      { background: rgba(0,212,255,0.12); color: var(--primary); border: 1px solid rgba(0,212,255,0.3); }
+        .role-pill.technician { background: rgba(245,158,11,0.12); color: var(--p2-amber); border: 1px solid rgba(245,158,11,0.3); }
+        .role-pill.worker     { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+        .password-toggle-btn:hover { color: var(--text-primary); }
+
+        .strength-bar-wrap {
+            margin-top: 6px;
+            display: flex;
+            gap: 4px;
+            height: 4px;
+        }
+        .strength-seg {
+            flex: 1;
+            background: var(--border-subtle);
+            border-radius: 2px;
+            transition: background 0.2s ease;
+        }
+
+        .security-note {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: var(--border-radius-sm);
+            padding: 0.875rem 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-container"></div>
+
+        <main class="main-content">
+            <!-- Header -->
+            <div id="header-container"></div>
+
+            <div class="content-wrapper">
+                <section class="view-section active">
+                    <div class="view-header">
+                        <div>
+                            <h1 class="view-title">Hồ Sơ &amp; Bảo Mật Tài Khoản</h1>
+                            <p class="view-subtitle">Cập nhật thông tin định danh ca trực và thiết lập mật khẩu mã hóa an toàn</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-grid">
+                        <!-- Panel 1: Profile Information -->
+                        <div class="glass-panel profile-panel">
+                            <div class="profile-header-card">
+                                <div class="profile-avatar-box">
+                                    <img id="avatarPreview" src="https://ui-avatars.com/api/?name=User&background=27272a&color=fff" alt="Avatar">
+                                </div>
+                                <div>
+                                    <h3 id="displayFullname" style="font-size:1.1rem;font-weight:700;color:var(--text-bright);margin-bottom:4px;">...</h3>
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <span id="rolePill" class="role-pill worker">Công Nhân</span>
+                                        <span class="text-xs text-muted font-mono" id="displayUsername">@user</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="profileInfoForm">
+                                <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-bright);margin-bottom:1rem;display:flex;align-items:center;gap:6px;">
+                                    <i class="fa-solid fa-address-card" style="color:var(--primary);"></i>
+                                    Thông Tin Cá Nhân
+                                </h4>
+
+                                <!-- Họ tên -->
+                                <div class="form-group mb-3">
+                                    <label>Họ và Tên Nhân Viên</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-regular fa-user"></i>
+                                        <input type="text" id="inputFullname" required placeholder="Nguyễn Văn A">
+                                    </div>
+                                </div>
+
+                                <!-- Tên đăng nhập (Readonly) -->
+                                <div class="form-group mb-3">
+                                    <label>Tên Đăng Nhập (Cố định)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-at"></i>
+                                        <input type="text" id="inputUsername" class="font-mono readonly-input" readonly>
+                                    </div>
+                                    <small class="text-xs text-muted">Mã định danh duy nhất của tài khoản trên hệ thống xưởng.</small>
+                                </div>
+
+                                <!-- Email liên kết -->
+                                <div class="form-group mb-3">
+                                    <label>Email Liên Kết (Nhận mã OTP khôi phục)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-regular fa-envelope"></i>
+                                        <input type="email" id="inputEmail" placeholder="vidu@gmail.com" class="font-mono" required>
+                                    </div>
+                                    <small class="text-xs text-muted">Email nhận mã OTP khi khôi phục hoặc đổi mật khẩu.</small>
+                                </div>
+
+                                <!-- Số điện thoại -->
+                                <div class="form-group mb-3">
+                                    <label>Số Điện Thoại Liên Hệ</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-phone"></i>
+                                        <input type="tel" id="inputPhone" placeholder="0901 234 567" class="font-mono">
+                                    </div>
+                                </div>
+
+                                <!-- Phân xưởng / Bộ phận -->
+                                <div class="form-group mb-4">
+                                    <label>Phân Xưởng / Bộ Phận Trực Thuộc</label>
+                                    <div class="custom-select">
+                                        <select id="inputDepartment" required>
+                                            <option value="Xưởng May">Xưởng May (Stitching Line)</option>
+                                            <option value="Xưởng Cắt">Xưởng Cắt (Cutting Line)</option>
+                                            <option value="Xưởng Đế">Xưởng Đế (Sole Production)</option>
+                                            <option value="Xưởng Gò">Xưởng Gò (Assembly Line)</option>
+                                            <option value="Phòng Bảo Trì Cơ Điện">Phòng Bảo Trì Cơ Điện (Maintenance)</option>
+                                            <option value="Quản trị hệ thống">Quản Trị Hệ Thống (Operations)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-glow" id="saveProfileBtn">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi Thông Tin
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Panel 2: Password Change Form -->
+                        <div class="glass-panel profile-panel">
+                            <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-bright);margin-bottom:0.75rem;display:flex;align-items:center;gap:6px;">
+                                <i class="fa-solid fa-lock" style="color:var(--primary);"></i>
+                                Đổi Mật Khẩu
+                            </h4>
+
+                            <form id="changePasswordForm">
+                                <!-- Mật khẩu hiện tại -->
+                                <div class="form-group mb-3">
+                                    <label>Mật Khẩu Hiện Tại</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-key"></i>
+                                        <input type="password" id="currentPassInput" required placeholder="Nhập mật khẩu hiện tại">
+                                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('currentPassInput', this)" title="Ẩn/hiện mật khẩu">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Mật khẩu mới -->
+                                <div class="form-group mb-3">
+                                    <label>Mật Khẩu Mới (Tối thiểu 6 ký tự)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-lock"></i>
+                                        <input type="password" id="newPassInput" required placeholder="Nhập mật khẩu mới" minlength="6">
+                                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('newPassInput', this)" title="Ẩn/hiện mật khẩu">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="strength-bar-wrap" id="strengthBar">
+                                        <div class="strength-seg" id="seg1"></div>
+                                        <div class="strength-seg" id="seg2"></div>
+                                        <div class="strength-seg" id="seg3"></div>
+                                    </div>
+                                    <small class="text-xs text-muted" id="strengthLabel" style="margin-top:2px;display:block;">Độ mạnh mật khẩu: Chưa nhập</small>
+                                </div>
+
+                                <!-- Xác nhận mật khẩu mới -->
+                                <div class="form-group mb-4">
+                                    <label>Xác Nhận Mật Khẩu Mới</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-check-double"></i>
+                                        <input type="password" id="confirmPassInput" required placeholder="Nhập lại mật khẩu mới" minlength="6">
+                                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('confirmPassInput', this)" title="Ẩn/hiện mật khẩu">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div id="passwordMismatchMsg" style="color:var(--p1-red);font-size:0.75rem;margin-top:4px;display:none;">
+                                        <i class="fa-solid fa-circle-exclamation"></i> Mật khẩu xác nhận không trùng khớp!
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-emergency btn-glow" id="changePassBtn">
+                                    <i class="fa-solid fa-shield-check"></i> Cập Nhật Mật Khẩu An Toàn
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sonner / Stacked Toast Container -->
+    <div id="sonner-container" class="sonner-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+    <script src="scripts/store.js?v=11"></script>
+    <script src="scripts/ui.js?v=11"></script>
+    <script src="scripts/auth.js?v=11"></script>
+    <script src="scripts/components.js?v=11"></script>
+    <script src="scripts/profile.js?v=11"></script>
+</body>
+</html>

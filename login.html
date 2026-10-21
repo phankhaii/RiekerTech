@@ -10,14 +10,24 @@
     <link rel="stylesheet" href="styles/variables.css">
     <link rel="stylesheet" href="styles/layout.css">
     <link rel="stylesheet" href="styles/components.css">
+    <script>
+        // Pre-apply saved theme to avoid FOUC
+        (function() {
+            const saved = localStorage.getItem('rieker_theme') || 'dark';
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <style>
         body {
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
             background-color: var(--bg-base);
+            position: relative;
         }
 
         /* Technical Grid Pattern */
@@ -32,9 +42,15 @@
             pointer-events: none;
         }
 
+        [data-theme="light"] body::before {
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+        }
+
         .auth-wrap {
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
             padding: 1.25rem;
             z-index: 10;
             position: relative;
@@ -82,7 +98,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .auth-logo-icon {
@@ -143,9 +159,11 @@
             border-radius: var(--border-radius-xs);
             display: none;
             font-weight: 500;
+            line-height: 1.4;
         }
         .msg-error   { background: var(--p1-bg); color: var(--p1-red); border: 1px solid var(--p1-border); }
         .msg-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+        .msg-info    { background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border); }
 
         .auth-toggle {
             margin-top: 1.125rem;
@@ -160,7 +178,7 @@
         }
         .auth-toggle a:hover { text-decoration: underline; }
 
-        #registerForm { display: none; }
+        #registerForm, #forgotForm { display: none; }
 
         .auth-footer {
             text-align: center;
@@ -169,9 +187,55 @@
             color: var(--text-muted);
             font-family: var(--font-mono);
         }
+
+        .theme-corner-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1.25rem;
+            z-index: 100;
+        }
+
+        .email-otp-dispatch-card {
+            background: rgba(0, 212, 255, 0.06);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: var(--border-radius-sm);
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .email-otp-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .otp-number-display {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.18em;
+            margin: 6px 0;
+            font-family: var(--font-mono);
+            text-align: center;
+            background: var(--bg-surface);
+            padding: 6px;
+            border-radius: var(--border-radius-xs);
+            border: 1px dashed rgba(0, 212, 255, 0.4);
+        }
     </style>
 </head>
 <body>
+    <!-- Corner Dark / Light Mode Switcher -->
+    <div class="theme-corner-toggle">
+        <button class="icon-btn tooltip" id="loginThemeBtn" title="Chuyển chế độ Sáng / Tối" onclick="toggleLoginTheme()">
+            <i class="fa-solid fa-sun" id="loginThemeIcon"></i>
+        </button>
+    </div>
+
     <div class="auth-wrap">
         <div class="brand-topbar">
             <span class="brand-badge">
@@ -195,24 +259,33 @@
 
                 <div id="errorMsg"   class="msg-box msg-error"></div>
                 <div id="successMsg" class="msg-box msg-success"></div>
+                <div id="infoMsg"    class="msg-box msg-info"></div>
 
-                <!-- Login Form -->
+                <!-- 1. LOGIN FORM -->
                 <form id="loginForm">
                     <div class="auth-section-title">Xác thực tài khoản ca trực</div>
                     <div class="form-group">
                         <label>Tên đăng nhập</label>
                         <div class="input-with-icon">
                             <i class="fa-regular fa-user"></i>
-                            <input type="text" id="logUsername" required placeholder="Nhập tên đăng nhập">
+                            <input type="text" id="logUsername" required placeholder="Nhập tên đăng nhập" autocomplete="username">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Mật khẩu</label>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="logPassword" required placeholder="••••••••">
+                            <input type="password" id="logPassword" required placeholder="••••••••" autocomplete="current-password">
                         </div>
                     </div>
+
+                    <!-- Quên Mật Khẩu Link -->
+                    <div style="display:flex; justify-content:flex-end; margin-top:-2px; margin-bottom:12px;">
+                        <a href="#" id="showForgotBtn" style="color:var(--text-secondary); font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                            <i class="fa-solid fa-key" style="font-size:0.7rem; color:var(--primary);"></i> Quên mật khẩu?
+                        </a>
+                    </div>
+
                     <button type="submit" class="btn btn-primary auth-btn">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập
                     </button>
@@ -221,101 +294,266 @@
                     </div>
                 </form>
 
-                <!-- Register Form -->
+                <!-- 2. REGISTER FORM (Có trường Email - 1 Email đăng ký được nhiều tài khoản) -->
                 <form id="registerForm">
                     <div class="auth-section-title">Tạo tài khoản nhân viên</div>
+                    
                     <div class="form-group">
                         <label>Họ và Tên</label>
                         <div class="input-with-icon">
                             <i class="fa-regular fa-id-card"></i>
-                            <input type="text" id="regFullname" required placeholder="Nguyễn Văn A">
+                            <input type="text" id="regFullname" required placeholder="Họ và tên">
                         </div>
                     </div>
+
+                    <!-- Email -->
                     <div class="form-group">
-                        <label>Vai trò / Chức danh</label>
+                        <label>Email</label>
+                        <div class="input-with-icon">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="regEmail" required placeholder="email@gmail.com" class="font-mono">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vai trò</label>
                         <div class="custom-select">
                             <select id="regRole" required>
-                                <option value="worker">Công nhân / Tổ trưởng sản xuất</option>
-                                <option value="technician">Kỹ thuật viên cơ điện</option>
+                                <option value="worker">Công nhân</option>
+                                <option value="technician">Kỹ thuật viên</option>
                             </select>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label>Bộ phận</label>
+                        <div class="custom-select">
+                            <select id="regDepartment">
+                                <option value="Xưởng May">Xưởng May</option>
+                                <option value="Xưởng Cắt">Xưởng Cắt</option>
+                                <option value="Xưởng Đế">Xưởng Đế</option>
+                                <option value="Xưởng Gò">Xưởng Gò</option>
+                                <option value="Phòng Bảo Trì Cơ Điện">Phòng Bảo Trì</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Tên đăng nhập</label>
                         <div class="input-with-icon">
                             <i class="fa-regular fa-user"></i>
-                            <input type="text" id="regUsername" required placeholder="vd: nv.a" class="font-mono">
+                            <input type="text" id="regUsername" required placeholder="Tên đăng nhập" class="font-mono">
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label>Mật khẩu</label>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="regPassword" required placeholder="••••••••">
+                            <input type="password" id="regPassword" required placeholder="Tối thiểu 6 ký tự" minlength="6">
                         </div>
                     </div>
+
                     <button type="submit" class="btn btn-primary auth-btn">
-                        <i class="fa-solid fa-user-plus"></i> Hoàn Tất Đăng Ký
+                        <i class="fa-solid fa-user-plus"></i> Đăng Ký
                     </button>
                     <div class="auth-toggle">
-                        <p>Đã có tài khoản? <a href="#" id="showLoginBtn">Đăng nhập</a></p>
+                        <p>Đã có tài khoản? <a href="#" id="showLoginFromRegBtn">Đăng nhập</a></p>
                     </div>
                 </form>
+
+                <!-- 3. FORGOT PASSWORD FORM -->
+                <form id="forgotForm">
+                    <div class="auth-section-title">Khôi phục mật khẩu</div>
+
+                    <!-- Step 1: Input registered Email or Username -->
+                    <div id="forgotStep1">
+                        <p class="text-xs text-muted" style="margin-bottom:12px;">
+                            Nhập email hoặc tên đăng nhập để nhận mã xác nhận OTP.
+                        </p>
+                        <div class="form-group">
+                            <label>Email hoặc Tên đăng nhập</label>
+                            <div class="input-with-icon">
+                                <i class="fa-regular fa-envelope"></i>
+                                <input type="text" id="forgotIdentifier" required placeholder="Nhập email hoặc username" class="font-mono">
+                            </div>
+                        </div>
+
+                        <!-- Selector if multiple accounts belong to same email -->
+                        <div class="form-group" id="accountSelectorGroup" style="display:none;">
+                            <label>Chọn tài khoản:</label>
+                            <div class="custom-select">
+                                <select id="accountSelectBox"></select>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary auth-btn" id="sendEmailOtpBtn">
+                            <i class="fa-solid fa-paper-plane"></i> Gửi Mã OTP
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Input OTP received in Email + New Password -->
+                    <div id="forgotStep2" style="display:none;">
+                        <div class="email-otp-dispatch-card">
+                            <div class="email-otp-header" style="color:#22c55e;">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Đã gửi mã OTP qua Gmail!</span>
+                            </div>
+                            <p class="text-xs text-muted" id="sentEmailTargetText" style="margin-top:4px;">Hộp thư: ...</p>
+                            
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                                <span class="text-xs text-muted" id="otpTimerText">Hiệu lực: 300s</span>
+                                <small style="color:var(--primary); font-size:0.7rem;"><i class="fa-solid fa-envelope-open-text"></i> Kiểm tra hòm thư</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mã OTP</label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-key"></i>
+                                <input type="text" id="forgotOtpInput" required placeholder="Nhập 6 số" maxlength="6" class="font-mono text-center" style="font-weight:700;letter-spacing:0.2em;font-size:1.1rem;color:var(--primary);">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mật khẩu mới</label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" id="forgotNewPass" required placeholder="Tối thiểu 6 ký tự" minlength="6">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Xác nhận mật khẩu</label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-check-double"></i>
+                                <input type="password" id="forgotConfirmPass" required placeholder="Nhập lại mật khẩu" minlength="6">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary auth-btn">
+                            <i class="fa-solid fa-check"></i> Đổi Mật Khẩu
+                        </button>
+                    </div>
+
+                    <div class="auth-toggle">
+                        <p><a href="#" id="showLoginFromForgotBtn"><i class="fa-solid fa-arrow-left"></i> Quay lại Đăng nhập</a></p>
+                    </div>
+                </form>
+
             </div>
         </div>
 
         <div class="auth-footer">
-            © 2026 Rieker Vietnam · Industrial Operations v2.0
+            © 2026 Rieker Vietnam · Industrial Operations
         </div>
     </div>
 
+    <!-- Sonner / Stacked Toast Container -->
+    <div id="sonner-container" class="sonner-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="scripts/auth.js?v=4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+    <script src="scripts/ui.js?v=10"></script>
+    <script src="scripts/auth.js?v=10"></script>
     <script>
-        if (window.auth.getCurrentUser()) {
+        if (window.auth && window.auth.getCurrentUser()) {
             window.location.href = 'index.html';
         }
 
-        const loginForm    = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const errorMsg     = document.getElementById('errorMsg');
-        const successMsg   = document.getElementById('successMsg');
-
-        document.getElementById('showRegisterBtn').addEventListener('click', (e) => {
-            e.preventDefault();
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'block';
-            hideMessages();
-        });
-
-        document.getElementById('showLoginBtn').addEventListener('click', (e) => {
-            e.preventDefault();
-            registerForm.style.display = 'none';
-            loginForm.style.display = 'block';
-            hideMessages();
-        });
-
-        function hideMessages() {
-            errorMsg.style.display   = 'none';
-            successMsg.style.display = 'none';
-        }
-
-        function showMessage(msg, isError = true) {
-            hideMessages();
-            if (isError) {
-                errorMsg.textContent   = msg;
-                errorMsg.style.display = 'block';
-            } else {
-                successMsg.textContent   = msg;
-                successMsg.style.display = 'block';
+        // Theme Toggle for Login Page
+        function updateLoginThemeIcon() {
+            const current = localStorage.getItem('rieker_theme') || 'dark';
+            const icon = document.getElementById('loginThemeIcon');
+            const btn = document.getElementById('loginThemeBtn');
+            if (icon) {
+                icon.className = current === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            }
+            if (btn) {
+                btn.setAttribute('title', current === 'light' ? 'Chuyển sang chế độ Tối (Dark)' : 'Chuyển sang chế độ Sáng (Light)');
             }
         }
 
+        function toggleLoginTheme() {
+            const current = localStorage.getItem('rieker_theme') || 'dark';
+            const next = current === 'light' ? 'dark' : 'light';
+            if (next === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            localStorage.setItem('rieker_theme', next);
+            updateLoginThemeIcon();
+        }
+
+        updateLoginThemeIcon();
+
+        // Forms and Elements
+        const loginForm    = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const forgotForm   = document.getElementById('forgotForm');
+        const errorMsg     = document.getElementById('errorMsg');
+        const successMsg   = document.getElementById('successMsg');
+        const infoMsg      = document.getElementById('infoMsg');
+
+        function hideMessages() {
+            if (errorMsg)   errorMsg.style.display   = 'none';
+            if (successMsg) successMsg.style.display = 'none';
+            if (infoMsg)    infoMsg.style.display    = 'none';
+        }
+
+        function showMessage(msg, type = 'error') {
+            hideMessages();
+            if (type === 'error') {
+                errorMsg.textContent = msg;
+                errorMsg.style.display = 'block';
+            } else if (type === 'success') {
+                successMsg.textContent = msg;
+                successMsg.style.display = 'block';
+            } else {
+                infoMsg.textContent = msg;
+                infoMsg.style.display = 'block';
+            }
+        }
+
+        function showView(view) {
+            hideMessages();
+            loginForm.style.display    = view === 'login' ? 'block' : 'none';
+            registerForm.style.display = view === 'register' ? 'block' : 'none';
+            forgotForm.style.display   = view === 'forgot' ? 'block' : 'none';
+        }
+
+        // Navigation toggles
+        document.getElementById('showRegisterBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('register');
+        });
+
+        document.getElementById('showLoginFromRegBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('login');
+        });
+
+        document.getElementById('showForgotBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('forgot');
+            document.getElementById('forgotStep1').style.display = 'block';
+            document.getElementById('forgotStep2').style.display = 'none';
+            const userVal = document.getElementById('logUsername').value.trim();
+            if (userVal) document.getElementById('forgotIdentifier').value = userVal;
+        });
+
+        document.getElementById('showLoginFromForgotBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('login');
+        });
+
+        // ─── 1. LOGIN SUBMIT ──────────────────────────────────
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = loginForm.querySelector('.auth-btn');
             const originalBtn = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang kiểm tra...';
+            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang xác thực...';
             submitBtn.disabled = true;
 
             const user = document.getElementById('logUsername').value.trim();
@@ -329,42 +567,164 @@
             if (result.success) {
                 window.location.href = 'index.html';
             } else {
-                showMessage(result.message, true);
+                showMessage(result.message, 'error');
             }
         });
 
+        // ─── 2. REGISTER SUBMIT (WITH EMAIL) ──────────────────
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = registerForm.querySelector('.auth-btn');
             const originalBtn = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang lưu...';
+            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang mã hóa & lưu...';
             submitBtn.disabled = true;
 
-            const fullname = document.getElementById('regFullname').value.trim();
-            const role     = document.getElementById('regRole').value;
-            const user     = document.getElementById('regUsername').value.trim();
-            const pass     = document.getElementById('regPassword').value;
+            const fullname   = document.getElementById('regFullname').value.trim();
+            const email      = document.getElementById('regEmail').value.trim();
+            const role       = document.getElementById('regRole').value;
+            const department = document.getElementById('regDepartment').value;
+            const user       = document.getElementById('regUsername').value.trim();
+            const pass       = document.getElementById('regPassword').value;
 
-            if (user.length === 0 || pass.length === 0) {
-                showMessage('Vui lòng nhập đầy đủ thông tin!', true);
+            if (!email || !email.includes('@')) {
+                showMessage('Vui lòng cung cấp địa chỉ email hợp lệ để nhận mã OTP!', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtn;
                 return;
             }
 
-            const result = await window.auth.register(user, pass, role, fullname);
+            if (user.length === 0 || pass.length < 6) {
+                showMessage('Vui lòng điền đầy đủ và đặt mật khẩu tối thiểu 6 ký tự!', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtn;
+                return;
+            }
+
+            const result = await window.auth.register(user, pass, role, fullname, email, department);
 
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtn;
 
             if (result.success) {
                 registerForm.reset();
-                registerForm.style.display = 'none';
-                loginForm.style.display = 'block';
-                showMessage(result.message, false);
+                showView('login');
+                showMessage(result.message, 'success');
                 document.getElementById('logUsername').value = user;
             } else {
-                showMessage(result.message, true);
+                showMessage(result.message, 'error');
+            }
+        });
+
+        // ─── 3. FORGOT PASSWORD: STEP 1 (REQUEST OTP TO EMAIL) ─
+        let activeOtpUsername = '';
+        let activeOtpEmail = '';
+        let otpCountdownInterval = null;
+
+        document.getElementById('sendEmailOtpBtn').addEventListener('click', async () => {
+            const identifierInput = document.getElementById('forgotIdentifier');
+            const identifier = identifierInput.value.trim();
+
+            if (!identifier) {
+                showMessage('Vui lòng nhập Email hoặc Tên đăng nhập để nhận mã OTP!', 'error');
+                identifierInput.focus();
+                return;
+            }
+
+            const sendBtn = document.getElementById('sendEmailOtpBtn');
+            const originalText = sendBtn.innerHTML;
+            sendBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang gửi mã về Email...';
+            sendBtn.disabled = true;
+
+            const res = await window.auth.requestPasswordResetOTP(identifier);
+
+            sendBtn.innerHTML = originalText;
+            sendBtn.disabled = false;
+
+            if (!res.success) {
+                showMessage(res.message, 'error');
+                return;
+            }
+
+            activeOtpUsername = res.username;
+            activeOtpEmail = res.email;
+
+            // Transition to Step 2
+            document.getElementById('forgotStep1').style.display = 'none';
+            document.getElementById('forgotStep2').style.display = 'block';
+
+            // Display Info
+            document.getElementById('sentEmailTargetText').innerHTML = `Đã gửi mã đến: <strong style="color:var(--primary);">${res.maskedEmail || res.email}</strong>`;
+            
+            if (res.emailSent) {
+                showMessage(`Mã OTP đã gửi đến Gmail. Vui lòng kiểm tra hộp thư!`, 'success');
+            } else {
+                showMessage(`Đang gửi OTP. Vui lòng kiểm tra hộp thư (hoặc mục Spam).`, 'warning');
+            }
+
+            // Trigger sonner toast
+            window.showSonnerToast && window.showSonnerToast({
+                title: 'Đã Gửi OTP',
+                description: `Kiểm tra mã tại Gmail (${res.maskedEmail || res.email}).`,
+                level: res.emailSent ? 'success' : 'warning',
+                playSound: true
+            });
+
+            // Countdown timer (300s)
+            let remaining = 300;
+            const timerEl = document.getElementById('otpTimerText');
+            clearInterval(otpCountdownInterval);
+            otpCountdownInterval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(otpCountdownInterval);
+                    timerEl.textContent = 'Mã OTP đã hết hạn! Vui lòng yêu cầu lại.';
+                    timerEl.style.color = 'var(--p1-red)';
+                } else {
+                    timerEl.textContent = `Hiệu lực: ${remaining}s`;
+                }
+            }, 1000);
+
+            document.getElementById('forgotOtpInput').focus();
+        });
+
+        // ─── 4. FORGOT PASSWORD: STEP 2 (RESET WITH BCRYPT) ───
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const otpCode = document.getElementById('forgotOtpInput').value.trim();
+            const newPass = document.getElementById('forgotNewPass').value;
+            const confirmPass = document.getElementById('forgotConfirmPass').value;
+
+            if (newPass.length < 6) {
+                showMessage('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showMessage('Xác nhận mật khẩu mới không trùng khớp!', 'error');
+                return;
+            }
+
+            const submitBtn = forgotForm.querySelector('#forgotStep2 button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="spinner" style="border-width:2px;width:14px;height:14px;margin-right:6px;"></div> Đang mã hóa & lưu...';
+            submitBtn.disabled = true;
+
+            const res = await window.auth.resetPasswordWithOTP(activeOtpUsername, otpCode, newPass);
+
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+
+            if (res.success) {
+                clearInterval(otpCountdownInterval);
+                forgotForm.reset();
+                showView('login');
+                showMessage(res.message, 'success');
+                document.getElementById('logUsername').value = activeOtpUsername;
+                document.getElementById('logPassword').value = '';
+                document.getElementById('logPassword').focus();
+            } else {
+                showMessage(res.message, 'error');
             }
         });
     </script>
