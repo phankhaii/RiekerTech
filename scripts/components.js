@@ -200,6 +200,9 @@ window.closeMachineDrawer = function() {
     const panel = document.getElementById('machineSheetPanel');
     if (backdrop) backdrop.classList.remove('open');
     if (panel) panel.classList.remove('open');
+
+    // Kích hoạt sự kiện để màn hình quét QR tiếp tục quét frame tiếp theo
+    window.dispatchEvent(new CustomEvent('machineDrawerClosed'));
 };
 
 window.openMachineDrawer = async function(machineId, details = null) {

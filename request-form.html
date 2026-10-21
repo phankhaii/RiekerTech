@@ -213,8 +213,10 @@
     <script src="scripts/components.js?v=12"></script>
     <script>
         const user = window.auth.requireAuth();
+        if (!user) throw new Error('redirect');
         if (user.role !== 'worker') {
             window.location.href = 'index.html';
+            throw new Error('redirect');
         }
         document.getElementById('sidebar-container').innerHTML = window.renderSidebar('form');
         document.getElementById('header-container').innerHTML = window.renderHeader();

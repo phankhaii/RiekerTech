@@ -172,19 +172,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('temp_scanned_id', machineId);
                 window.location.href = `request-form.html?machine=${encodeURIComponent(machineId)}`;
             }
-
-            // Resume frame scanning if drawer closes
-            resumeScanAfterDelay();
-        }, 600);
+        }, 500);
     }
 
-    function resumeScanAfterDelay() {
-        setTimeout(() => {
-            if (videoStream && !scanAnimationId) {
-                scanAnimationId = requestAnimationFrame(scanForQR);
+    function resumeScanning() {
+        if (processingOverlay) processingOverlay.classList.add('hidden');
+        if (scannerLine && videoStream) scannerLine.classList.remove('hidden');
+
+        if (videoStream) {
+            if (scanAnimationId) {
+                cancelAnimationFrame(scanAnimationId);
+                scanAnimationId = null;
             }
-        }, 1500);
+            // Thêm độ trễ 800ms để người dùng kịp di chuyển camera khỏi mã cũ
+            setTimeout(() => {
+                if (videoStream && !scanAnimationId) {
+                    scanAnimationId = requestAnimationFrame(scanForQR);
+                }
+            }, 800);
+        }
     }
+
+    // Lắng nghe khi Drawer đóng lại để tiếp tục quét ngay không cần tắt bật lại camera
+    window.addEventListener('machineDrawerClosed', () => {
+        resumeScanning();
+    });
 
     // ==========================================
     // Start / Stop Scanner

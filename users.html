@@ -111,14 +111,15 @@
 <div id="sonner-container" class="sonner-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="scripts/store.js?v=9"></script>
-<script src="scripts/ui.js?v=9"></script>
-<script src="scripts/auth.js?v=9"></script>
-<script src="scripts/components.js?v=9"></script>
+<script src="scripts/store.js?v=13"></script>
+<script src="scripts/ui.js?v=13"></script>
+<script src="scripts/auth.js?v=13"></script>
+<script src="scripts/components.js?v=13"></script>
 <script>
     const user = window.auth.requireAuth();
-    if (user.role !== 'admin') {
-        window.location.href = 'index.html';
+    if (!user || user.role !== 'admin') {
+        window.location.href = user ? 'index.html' : 'login.html';
+        throw new Error('redirect');
     }
     document.getElementById('sidebar-container').innerHTML = window.renderSidebar('users');
     document.getElementById('header-container').innerHTML = window.renderHeader();
@@ -169,13 +170,28 @@
                     </div>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
     }
 
     async function loadUsers() {
-        document.getElementById('usersBody').innerHTML =
-            `<tr><td colspan="6" style="text-align:center;padding:2rem;"><div class="spinner" style="border-width:2px;width:20px;height:20px;border-top-color:#00d4ff;margin-right:8px;"></div>Đang tải tài khoản...</td></tr>`;
-        allUsers = await window.fetchUsers();
+        const tbody = document.getElementById('usersBody');
+        tbody.innerHTML =
+            `<tr><td colspan="7" style="text-align:center;padding:2rem;"><div class="spinner" style="border-width:2px;width:20px;height:20px;border-top-color:#00d4ff;margin-right:8px;"></div>Đang tải tài khoản...</td></tr>`;
+        
+        try {
+            if (typeof window.fetchUsers === 'function') {
+                allUsers = await window.fetchUsers();
+            } else if (window.supabaseClient) {
+                const { data, error } = await window.supabaseClient.from('app_users').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                allUsers = data || [];
+            }
+        } catch (e) {
+            console.error('Lỗi loadUsers:', e);
+            allUsers = [];
+        }
+
         renderUsers(allUsers);
     }
 
